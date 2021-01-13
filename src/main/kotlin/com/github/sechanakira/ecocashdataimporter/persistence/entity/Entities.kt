@@ -9,7 +9,7 @@ import javax.persistence.Id
 
 @Entity
 data class CustomerData(
-    @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Long,
+    @Id @GeneratedValue(strategy = GenerationType.AUTO) var id: Long?,
     val msisdn: String,
     val countryOfOrigin: String,
     val dateOfBirth: LocalDate,
@@ -30,7 +30,7 @@ data class CustomerData(
 
 @Entity
 data class ImportStatus(
-    @Id @GeneratedValue(strategy = GenerationType.AUTO) val id: Long,
+    @Id @GeneratedValue(strategy = GenerationType.AUTO) var id: Long?,
     val startTime: LocalDateTime,
     val endTime: LocalDateTime
 )
