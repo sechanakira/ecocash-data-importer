@@ -15,12 +15,12 @@ import java.time.LocalDateTime
 
 @Service
 class DataImportService(
-    @Value("datafile.path") val dataFilePath: String,
-    val customerDataRepository: CustomerDataRepository,
-    val importStatusRepository: ImportStatusRepository
+    @Value("datafile.path") private val dataFilePath: String,
+    private val customerDataRepository: CustomerDataRepository,
+    private val importStatusRepository: ImportStatusRepository
 ) {
 
-    val path: Path = Paths.get(dataFilePath)
+    private val path: Path = Paths.get(dataFilePath)
 
     companion object {
         const val HEADER_LINE_NUMBER: Long = 0
