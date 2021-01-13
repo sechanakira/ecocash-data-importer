@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 
 @Service
 class DataImportService(
-    @Value("datafile.path") private val dataFilePath: String,
+    @Value("\${datafile.path}") private val dataFilePath: String,
     private val customerDataRepository: CustomerDataRepository,
     private val importStatusRepository: ImportStatusRepository
 ) {
@@ -23,7 +23,7 @@ class DataImportService(
     private val path: Path = Paths.get(dataFilePath)
 
     companion object {
-        const val HEADER_LINE_NUMBER: Long = 0
+        const val HEADER_LINE_TO_SKIP: Long = 1
         const val MSISDN_INDEX = 0
         const val DATE_INDEX = 1
         const val COUNTRY_OF_ORIGIN_INDEX = 2
@@ -48,9 +48,9 @@ class DataImportService(
 
         val importedData = mutableListOf<CustomerData>()
         Files.lines(path)
-            .skip(HEADER_LINE_NUMBER)
+            .skip(HEADER_LINE_TO_SKIP)
             .forEach { line ->
-                importedData.add(parseLine(line))
+                importedData.add(parseLine(line.replace("\"", "")))
             }
 
         customerDataRepository.saveAll(importedData)
