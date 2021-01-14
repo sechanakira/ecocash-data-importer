@@ -11,6 +11,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.logging.Logger
 
 
 @Service
@@ -19,6 +20,8 @@ class DataImportService(
     private val customerDataRepository: CustomerDataRepository,
     private val importStatusRepository: ImportStatusRepository
 ) {
+
+    var logger: Logger = Logger.getLogger(this::class.java.name)
 
     private val path: Path = Paths.get(dataFilePath)
 
@@ -47,14 +50,16 @@ class DataImportService(
     fun importData() {
         val startTime = LocalDateTime.now()
 
-        val importedData = mutableListOf<CustomerData>()
         Files.lines(path)
             .skip(HEADER_LINE_TO_SKIP)
             .forEach { line ->
-                importedData.add(parseLine(line.replace("\"", "")))
-            }
+                try {
+                    customerDataRepository.saveAndFlush(parseLine(line.replace("\"", "")))
+                } catch (e: Exception) {
+                    logger.info("Encountered exception ${e.message} while parsing line: $line")
+                }
 
-        customerDataRepository.saveAll(importedData)
+            }
 
         val endTime = LocalDateTime.now()
 
@@ -63,6 +68,8 @@ class DataImportService(
     }
 
     fun parseLine(line: String): CustomerData {
+        logger.info("Parsing line: $line")
+
         val splitLine = line.split("|")
         val msisdn = splitLine[MSISDN_INDEX]
         val countryOfOrigin = splitLine[COUNTRY_OF_ORIGIN_INDEX]
@@ -74,7 +81,12 @@ class DataImportService(
 
         var dateOfDeath: LocalDate? = null
         if (!splitLine[DOD_INDEX]?.isNullOrBlank()) {
-            dateOfDeath = LocalDate.parse(splitLine[DOD_INDEX].split(" ")[DATE_INDEX])
+            try {
+                dateOfDeath = LocalDate.parse(splitLine[DOD_INDEX].split(" ")[DATE_INDEX])
+            } catch (ex: Exception) {
+                logger.info("Encountered exception parsing date of death from ${splitLine[DOD_INDEX]} ")
+            }
+
         }
 
         val firstName = splitLine[FIRST_NAME_INDEX]
@@ -84,11 +96,33 @@ class DataImportService(
         val status = splitLine[STATUS_INDEX]
         val postalAddress = splitLine[POSTAL_ADDRESS_INDEX]
         val physicalAddress = splitLine[PHYSICAL_ADDRESS_INDEX]
-        val title = splitLine[TITLE_INDEX]
-        val idNumber = splitLine[ID_NUMBER_INDEX]
-        val companyName = splitLine[COMPANY_NAME_INDEX]
-        val gender = splitLine[GENDER_INDEX]
-        val occupation = splitLine[OCCUPATION_INDEX]
+
+        var title: String? = null
+        var idNumber: String? = null
+        var companyName: String? = null
+        var gender: String? = null
+        var occupation: String? = null
+
+        if (splitLine.size >= TITLE_INDEX + 1 && !splitLine[TITLE_INDEX]?.isNullOrBlank()) {
+            title = splitLine[TITLE_INDEX]
+        }
+
+        if (splitLine.size >= ID_NUMBER_INDEX + 1 && !splitLine[ID_NUMBER_INDEX]?.isNullOrBlank()) {
+            idNumber = splitLine[ID_NUMBER_INDEX]
+        }
+
+        if (splitLine.size >= COMPANY_NAME_INDEX + 1 && !splitLine[COMPANY_NAME_INDEX]?.isNullOrBlank()) {
+            companyName = splitLine[COMPANY_NAME_INDEX]
+        }
+
+        if (splitLine.size >= GENDER_INDEX + 1 && !splitLine[GENDER_INDEX]?.isNullOrBlank()) {
+            gender = splitLine[GENDER_INDEX]
+        }
+
+        if (splitLine.size >= OCCUPATION_INDEX + 1 && !splitLine[OCCUPATION_INDEX]?.isNullOrBlank()) {
+            occupation = splitLine[OCCUPATION_INDEX]
+        }
+
         return CustomerData(
             null,
             msisdn,

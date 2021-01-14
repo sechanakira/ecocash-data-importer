@@ -21,11 +21,11 @@ data class CustomerData(
     val status: String,
     val postalAddress: String,
     val physicalAddress: String,
-    val title: String,
-    val idNumber: String,
-    val companyName: String,
-    val gender: String,
-    val occupation: String
+    val title: String?,
+    val idNumber: String?,
+    val companyName: String?,
+    val gender: String?,
+    val occupation: String?
 )
 
 @Entity
